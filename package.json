@@ -1,0 +1,23 @@
+{
+  "name": "mediabackend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "mongoose": "^8.19.3",
+    "multer": "^2.0.2",
+    "nodemon": "^3.1.10",
+    "path": "^0.12.7",
+    "xxhash-wasm": "^1.1.0"
+  }
+}
