@@ -1,13 +1,10 @@
+import "./config/loadEnv.js";
 import express from "express";
-import dotenv from "dotenv";
-import upload from "./config/multerConfig.js"; 
-import uploadDir from "./utils/uploadPath.js"; 
-import path from "path";
-import cors from "cors"
-import mediaRoutes from "./routes/mediaRoutes.js"
+import upload from "./config/multerConfig.js";
+import uploadDir from "./utils/uploadPath.js";
+import cors from "cors";
+import mediaRoutes from "./routes/mediaRoutes.js";
 
-const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 const app = express();
 app.use(
   cors({
