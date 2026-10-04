@@ -71,6 +71,24 @@ export const getMediaHash = async (req, res) => {
         res.status(500).json({ message: "Server error during hashing" });
     }
 };
+const mediaDestination = ({ restaurantId, type, shared }) => {
+  const cleanType = String(type).trim();
+  const isShared = shared === undefined ? !restaurantId : String(shared) === "true";
+  if (!isShared && !restaurantId) {
+    return { error: "A restaurant is required for an exclusive image" };
+  }
+  if (!isShared) {
+    return {
+      folderPath: path.join(uploadDir, `restaurant_${restaurantId}`, cleanType),
+      fileUrl: `uploads/restaurant_${restaurantId}/${cleanType}`,
+    };
+  }
+  return {
+    folderPath: path.join(uploadDir, "media", "shared", cleanType),
+    fileUrl: `uploads/media/shared/${cleanType}`,
+  };
+};
+
 export const uploadMedia = async (req, res) => {
     const tempFilePath = req.file?.path;
 
@@ -79,29 +97,29 @@ export const uploadMedia = async (req, res) => {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const { restaurantId, type, hash } = req.query; 
+        const { restaurantId, type, hash, shared } = req.query; 
         if (!type || !hash) {
             await fs.unlink(tempFilePath).catch(() => {});
             return res.status(400).json({ message: "Missing type or hash in query" });
         }
 
+        const destination = mediaDestination({ restaurantId, type, shared });
+        if (destination.error) {
+            await fs.unlink(tempFilePath).catch(() => {});
+            return res.status(400).json({ message: destination.error });
+        }
+
         const safeName = req.file.originalname.replace(/\s+/g, "_");
         const filename = `${Date.now()}-${safeName}`; 
 
-        const folderPath = restaurantId
-            ? path.join(uploadDir, `restaurant_${restaurantId}`, type.trim())
-            : path.join(uploadDir, "media", "shared", type.trim());
+        await fs.mkdir(destination.folderPath, { recursive: true });
 
-        await fs.mkdir(folderPath, { recursive: true });
-
-        const finalFilePath = path.join(folderPath, filename);
+        const finalFilePath = path.join(destination.folderPath, filename);
         await fs.copyFile(tempFilePath, finalFilePath); 
 
         await fs.unlink(tempFilePath).catch(() => {}); 
 
-        const fileUrl = restaurantId
-            ? `uploads/restaurant_${restaurantId}/${type.trim()}/${filename}`
-            : `uploads/media/shared/${type.trim()}/${filename}`;
+        const fileUrl = `${destination.fileUrl}/${filename}`;
 
         res.status(201).json({
             url: fileUrl,
@@ -125,9 +143,13 @@ export const uploadMultipleMedia = async (req, res) => {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
-    const { restaurantId, type } = req.query;
+    const { restaurantId, type, shared } = req.query;
     if (!type) {
       return res.status(400).json({ message: "Missing type" });
+    }
+    const destination = mediaDestination({ restaurantId, type, shared });
+    if (destination.error) {
+      return res.status(400).json({ message: destination.error });
     }
 
     const results = [];
@@ -147,20 +169,14 @@ export const uploadMultipleMedia = async (req, res) => {
         const safeName = file.originalname.replace(/\s+/g, "_");
         const filename = `${Date.now()}-${safeName}`;
 
-        const folderPath = restaurantId
-          ? path.join(uploadDir, `restaurant_${restaurantId}`, type.trim())
-          : path.join(uploadDir, "media", "shared", type.trim());
+        await fs.mkdir(destination.folderPath, { recursive: true });
 
-        await fs.mkdir(folderPath, { recursive: true });
-
-        const finalFilePath = path.join(folderPath, filename);
+        const finalFilePath = path.join(destination.folderPath, filename);
         await fs.copyFile(tempFilePath, finalFilePath);
 
         await fs.unlink(tempFilePath).catch(() => {});
 
-        const fileUrl = restaurantId
-          ? `uploads/restaurant_${restaurantId}/${type.trim()}/${filename}`
-          : `uploads/media/shared/${type.trim()}/${filename}`;
+        const fileUrl = `${destination.fileUrl}/${filename}`;
 
         result = {
           url: fileUrl,
