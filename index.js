@@ -30,10 +30,8 @@ app.post("/upload", upload.single("file"), (req, res) => {
   res.json({ url: fileUrl });
 });
 app.use("/api/media", mediaRoutes);
-if (process.env.NODE_ENV !== "production") {
-  app.use("/uploads", express.static(uploadDir));
-  console.log("Serving uploads locally at /uploads");
-}
+app.use("/uploads", express.static(uploadDir));
+console.log("Serving uploads at /uploads");
 
 app.listen(4000, () => {
   console.log("📸 Media server running on port 4000");
