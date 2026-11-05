@@ -33,7 +33,8 @@ app.use("/api/media", mediaRoutes);
 app.use("/uploads", express.static(uploadDir));
 console.log("Serving uploads at /uploads");
 
-app.listen(4000, () => {
-  console.log("📸 Media server running on port 4000");
+const port = Number(process.env.PORT) || 4000;
+app.listen(port, () => {
+  console.log(`Media server running on port ${port}`);
   console.log(`Uploads directory: ${uploadDir}`);
 });
